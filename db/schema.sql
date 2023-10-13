@@ -2,13 +2,14 @@ DROP DATABASE IF EXISTS employees;
 
 CREATE DATABASE employees;
 
-USE DATABASE employees;
+USE employees;
 
 CREATE TABLE
     department (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(30)
     );
+
 
 CREATE TABLE
     part (
@@ -18,6 +19,7 @@ CREATE TABLE
         department_id INT NOT NULL,
         FOREIGN KEY (department_id) REFERENCES department(id) ON DELETE CASCADE
     );
+
 
 CREATE TABLE
     employee(
