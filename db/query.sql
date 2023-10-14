@@ -29,3 +29,7 @@ FROM employee e
     JOIN department d
     ON p.department_id = d.id
     WHERE p.id = 1;
+
+
+
+SELECT * FROM employees 

@@ -67,7 +67,7 @@ async function createNewRole(answers) {
 
         console.log(department_id)
 
-        const [rows, fields] = await db.promise().query('INSERT INTO part (title, salery, department_id) VALUES (?, ?, ?)'[answers.title, answers.salery, department_id]);
+        const [rows, fields] = await db.promise().query('INSERT INTO part (title, salary, department_id) VALUES (?, ?, ?)', [answers.title, answers.salary, department_id]);
 
         return console.table(rows);
     } catch (err) {
@@ -84,6 +84,24 @@ async function getRoles() {
     }
 };
 
+async function createNewEmployee(answers) {
+    try {
+        const [roleRow] = await db.promise().query('SELECT FROM part WHERE title = ?', [answers.choice]);
+
+        if (roleRow.length === 0) {
+            console.error('No role found')
+            return;
+        }
+
+        const role_id = roleRow[0].id;
+
+        const [rows, fields] = await db.promise().query('INSERT INTO employees (first_name, last_name, part_id, manager_id) VALUES (?, ?, ?)', [answers.first_name, answers.last_name, role_id, manager_id]);
+
+    } catch (err) {
+        console.error('failed to create employee');
+    }
+};
+
 module.exports = {
     getAllDepartments,
     getAllRoles,
@@ -91,5 +109,6 @@ module.exports = {
     createNewDepartment,
     getDepartments,
     createNewRole,
-    getRoles
+    getRoles,
+    createNewEmployee
 };
