@@ -1,10 +1,12 @@
-const mySql = require('mysql2/promise');
+const mySql = require('mysql2');
 const db = require('../db/connection');
 
 async function getAllDepartments() {
     try {
-      const [rows, fields] = await db.execute('SELECT * FROM department');
+      const [rows, fields] = await db.promise().query('SELECT * FROM department');
+
       return rows;
+      
     } catch (err) {
       console.error('No departments found: ', err);
     }
