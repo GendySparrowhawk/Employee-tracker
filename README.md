@@ -30,7 +30,7 @@ No install needed, just clone the code and go!
 
 ### Running
 run node index.js to initialize the prompts and watch it go! 
-Click here for a tutorial video: [Tutorial Video](https://drive.google.com/file/d/1Ewkdqx-rVbv8HN2Qgylf_f44wwpo74pC/view?usp=sharing)
+Click here for a tutorial video: [Tutorial Video](https://drive.google.com/file/d/12i_LntuDxaY6QqfKnsBR1YV68NpHYG1r/view?usp=sharing)
 
 ## Help
 Some fucntions are still a little prickly. Update employee fucntion most of all.
