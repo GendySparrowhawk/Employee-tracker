@@ -1,6 +1,9 @@
+// call in mysql and conncetion to database
 const mySql = require('mysql2');
 const db = require('../db/connection');
+const inquirer = require('inquirer');
 
+// funtions that talk directly to the database and will be exported to the top level index.js file.
 async function getAllDepartments() {
     try {
         const [rows, fields] = await db.promise().query('SELECT * FROM department');
@@ -62,12 +65,12 @@ async function createNewRole(answers) {
             return;
         }
 
-
+        // this gets the id dynamically from the useres choice even tho they only see department titles
         const department_id = departmentRow[0].id;
 
         console.log(department_id)
 
-        const [rows, fields] = await db.promise().query('INSERT INTO part (title, salary, department_id) VALUES (?, ?, ?)', [answers.title, answers.salary, department_id]);
+        const [rows, fields] = await db.promise().query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [answers.title, answers.salary, department_id]);
 
         return console.table(rows);
     } catch (err) {
@@ -75,10 +78,11 @@ async function createNewRole(answers) {
     }
 };
 
+// the differecne betweeen getALL functions and 'get__' functions is the later is used to populate the choices of select prompts in inquirer to make sure they are generated dinamically. 
 async function getRoles() {
     try {
-        const [rows] = db.promise().query('SELECT title FROM part');
-        return rows.map(part => part.title);
+        const [rows] = await db.promise().query('SELECT title FROM role');
+        return rows.map(role => role.title);
     } catch (err) {
         console.error("Failed to get roles", err);
     }
@@ -86,22 +90,79 @@ async function getRoles() {
 
 async function createNewEmployee(answers) {
     try {
-        const [roleRow] = await db.promise().query('SELECT FROM part WHERE title = ?', [answers.choice]);
+        const [roleRow] = await db.promise().query('SELECT * FROM role WHERE title = ?', [answers.role]);
 
         if (roleRow.length === 0) {
-            console.error('No role found')
             return;
         }
+        console.error('No role found')
+        // this section of the function solves the manager_id issue by leting the user select yes or no to "are they a manager"  if they select no it will ask them "who is their manager?"
+        let manager_id = null;
+        if (!answers.is_manager) {
+            const managers = await getManagers();
+            const managerAnswer = await inquirer.prompt({
+                type: 'list',
+                message: 'Who is this employee\'s manager?',
+                name: 'manager',
+                choices: managers
+            });
+            manager_id = managerAnswer.manager.value
+        };
+
 
         const role_id = roleRow[0].id;
+        console.log(manager_id)
 
-        const [rows, fields] = await db.promise().query('INSERT INTO employees (first_name, last_name, part_id, manager_id) VALUES (?, ?, ?)', [answers.first_name, answers.last_name, role_id, manager_id]);
+        const [rows, fields] = await db.promise().query('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [answers.first_name, answers.last_name, role_id, manager_id]);
+
+        console.table(rows);
 
     } catch (err) {
-        console.error('failed to create employee');
+        console.error('failed to create employee', err);
     }
 };
 
+async function getManagers() {
+    try {
+        const [rows] = await db.promise().query('SELECT id, first_name, last_name FROM employees WHERE manager_id IS NULL');
+        return rows.map(employee => ({
+            name: `${employee.first_name} ${employee.last_name}`,
+            value: employee.id,
+            employee_id: employee.id
+        }))
+        
+    
+    } catch (err) {
+        console.error('Failed to get managers', err);
+    }
+};
+
+async function updateEmployee(answers) {
+    try{
+        const [roleRow] = await db.promise().query('SELECT * FROM role WHERE title = ?', [answers.role]);
+
+        if (roleRow.length === 0) {
+            return;
+        }
+        const [rows, fields] = await db.promise().query('UPDATE employees SET role_id = ? WHERE first_name = ?'[role_id, answers.employee])  
+
+        console.table(rows);
+      } catch (err) {
+        console.error("failed to updae employee", err);
+      }
+};
+
+async function getEmployees() {
+    try {
+        const [rows] = await db.promise().query('SELECT first_name FROM employees');
+        return rows.map(employee => employee.first_name);
+    } catch (err) {
+        console.error("Failed to get roles", err);
+    }
+};
+
+
+// export fucntions for use elsewhere
 module.exports = {
     getAllDepartments,
     getAllRoles,
@@ -110,5 +171,8 @@ module.exports = {
     getDepartments,
     createNewRole,
     getRoles,
-    createNewEmployee
+    createNewEmployee,
+    getManagers,
+    updateEmployee,
+    getEmployees
 };

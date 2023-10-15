@@ -1,16 +1,15 @@
+// pullling in inquirer and fucntions from generate folder
 const inquirer = require("inquirer");
-const { getAllDepartments, getAllRoles, createNewDepartment, getDepartments, createNewRole, getRoles, createNewEmployee, getAllEmployees } = require('./generate');
+const { getAllDepartments, getAllRoles, createNewDepartment, getDepartments, createNewRole, getRoles, createNewEmployee, getAllEmployees, getManagers, getEmployees, updateEmployee } = require('./generate');
 
-// const mySql = require('mysql2/promise');
-// const db = require('./db/connection');
-// const generateTable = require('./functions')
 
+// prompts for inquirer q's
 const prompt = [
     {
         type: 'list',
         message: 'Welcome, What would you like to do?',
         name: 'choice',
-        choices: ['View all Departments', 'view all roles', 'view all employees', 'add a department', 'add a role', 'add an employee', 'update an employee role']
+        choices: ['View all Departments', 'view all roles', 'view all employees', 'view all managers', 'add a department', 'add a role', 'add an employee', 'update an employee role', 'quit']
     }
 ];
 
@@ -41,7 +40,7 @@ const roleQuestions = [
     }
 ];
 
-const employeeQuestions = [
+const employeeQuestionsA = [
     {
         type: 'input',
         message: 'What is the employees 1st name?',
@@ -52,21 +51,36 @@ const employeeQuestions = [
         message: 'what is the employees last name?',
         name: 'last_name'
     },
+]
+const employeeQuestionsB = [
     {
         type: 'list',
         message: 'what is the employees role?',
-        name: 'choice',
+        name: 'role',
         choices: []
     },
     {
-        type: 'list',
-        message: 'who is your manager?',
-        name: 'is_manager',
-        chosices: []
+        type: 'confirm',
+        message: 'is this employee a manager?',
+        name: 'is_manager'
+    }
+];
+
+const updateQuestions = [
+    {
+        type:'list',
+        message:'Which employee do you need to update?',
+        name:'employee',
+        choices: []
+    },
+    {
+        type:'list',
+        message:'what is their new role?',
+        name:'role',
+        choices:[]
     }
 ]
-
-
+// inint function with its switch case to run through all possiblities of user input
 function init() {
     inquirer.prompt(prompt).then(async (answer) => {
         switch (answer.choice) {
@@ -74,7 +88,7 @@ function init() {
                 try {
                     const departments = await getAllDepartments();
                     console.log(departments);
-
+                    // this init funciton is called after every scuessful case to let the user in the program run another comand without restarting the terminal
                     init();
 
                 } catch (err) {
@@ -109,6 +123,19 @@ function init() {
                 }
                 break;
         }
+        switch (answer.choice) {
+            case 'view all managers':
+                try {
+                    const managers = await getManagers();
+                    console.log(managers);
+
+                    init();
+                } catch (err) {
+                    console.error('Could not find any managers', err);
+                }
+                break;
+        }
+
         switch (answer.choice) {
             case 'add a department':
                 try {
@@ -145,9 +172,14 @@ function init() {
             case 'add an employee':
                 try {
                     const roles = await getRoles();
-                    employeeQuestions[2].choices = roles;
-
-                    const answers = await inquirer.prompt(employeeQuestions);
+                    employeeQuestionsB[0].choices = roles;
+                    
+                    combinedQuestions = [
+                        ...employeeQuestionsA,
+                        ...employeeQuestionsB
+                    ];
+                    
+                    const answers = await inquirer.prompt(combinedQuestions);
 
                     const newEmployee = await createNewEmployee(answers);
                     console.log(newEmployee);
@@ -155,27 +187,45 @@ function init() {
                     init();
 
                 } catch (err) {
-                    console.error(`Failed to add employee: ${newEmployee} `, err)
+                    console.error('Failed to add employee: ', err)
                 }
                 break;
         }
-        switch (answer.chioce){
-        case 'update an employee role':
-        try {
-            const employees = await getAllEmployees();
-            updateQuestions[0].choices = employees;
+        switch (answer.chioce) {
+            case 'update an employee role':
+                try {
+                    const employees = await getEmployees();
+                    console.log('before roles')
+                    const roles = await getRoles();
+                    console.log('after roles')
+                    updateQuestions[0].choices = employees;
+                    updateQuestions[1].choices = roles;
 
-            const answers = await inquirer.prompt(updateQuestions);
+                    const answers = await inquirer.prompt(updateQuestions);
 
-            const updatedEmployee = await updateEmployee(answers);
-            console.log(updatedEmployee);
+                    const updatedEmployee = await updateEmployee(answers);
+                    console.log(updatedEmployee);
 
-        } catch (err) {
-            console.error('Failed to update employee');
+                    init();
+
+                } catch (err) {
+                    console.error('Failed to update employee');
+                }
+                break;
         }
-    }
+        switch (answer.choice) {
+            // this last switch case breaks the cycle if the user selects quit.
+            case 'quit':
+                try {
+                    console.log('thank you! Get some rest and stay hydrated');
+                    process.exit();
+                } catch (err) {
+                    console.error('You are trapped! call for help!');
+                }
+                break;
+        }
     });
 }
 
-
+// call the init fucntion on npm start
 init();
